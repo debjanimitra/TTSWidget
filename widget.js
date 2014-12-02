@@ -1,26 +1,30 @@
 window.addEventListener('load', function (){	
-	var keys = []
-	var currTabIndex = 0; 
+	var keys = [];
+	var intervalID = null; //set to some value only if scanner running
+	var speech_rate = 1;
+	var silence_duration = 5000;
 
 	window.addEventListener("keydown", function(e){
 		keys[e.keyCode] = true;
-		if (keys[17] && keys[16] && keys[83]){
-		//	var focused = find_focused();
-		//	if (focused && focused.text){
-		//		tts(focused.text);
-		//	}
-		keys.length = 0;
-		var l = document.getElementsByTagName('a'), elementArray = [];
-		for(var i=0; i<l.length; i++) {
-  			elementArray.push(l[i]);
-		}
-		scan(elementArray);
+		if (num_of_true(keys)==3 && keys[17] && keys[16] && keys[83]){
+			keys.length = 0;
+			if (intervalID){
+				clearInterval(intervalID); //if already scanning, stop and restart
+			}
+			var l = document.getElementsByTagName('a'), elementArray = [];
+			for(var i=0; i<l.length; i++) {
+  				elementArray.push(l[i]);
+			}
+			scan(elementArray);
 		}
 
-	});
+		if (num_of_true(keys)==1 && keys[27]){
+			keys.length = 0;
+			if (intervalID){
+				clearInterval(intervalID);
+			}
+		}
 
-	window.addEventListener("keyup", function(e){
-		keys.length = 0;
 	});
 
 	function num_of_true(keys){
@@ -32,7 +36,6 @@ window.addEventListener('load', function (){
 		}
 		return count;
 	}
-
 
 	function find_focused(){
 		var focused = document.activeElement;
@@ -54,19 +57,19 @@ window.addEventListener('load', function (){
 
 	function scan(elementArray){
 		var count = 0;
-		var intervalID = setInterval(function () {
+		intervalID = setInterval(function () {
 			if (count < elementArray.length){
 				elementArray[count].focus();
+				elementArray[count].scrollIntoView(false);
 				tts(elementArray[count].text);
 				count++;
 			}
 			else{
 				elementArray[count-1].blur();
 				clearInterval(intervalID);
+				tts("There are no more links on this page");
 			}
 		}, 5000);
 	}
 
 });
-
-//});
