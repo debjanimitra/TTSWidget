@@ -1,16 +1,20 @@
 window.addEventListener('load', function (){	
-	console.log("hehrehrhe");	
 	var keys = []
 	var currTabIndex = 0; 
 
 	window.addEventListener("keydown", function(e){
 		keys[e.keyCode] = true;
 		if (keys[17] && keys[16] && keys[83]){
-			var focused = find_focused();
-			if (focused && focused.text){
-				tts(focused.text);
-			}
-			keys.length = 0;
+		//	var focused = find_focused();
+		//	if (focused && focused.text){
+		//		tts(focused.text);
+		//	}
+		keys.length = 0;
+		var l = document.getElementsByTagName('a'), elementArray = [];
+		for(var i=0; i<l.length; i++) {
+  			elementArray.push(l[i]);
+		}
+		scan(elementArray);
 		}
 
 	});
@@ -48,8 +52,19 @@ window.addEventListener('load', function (){
 		window.speechSynthesis.speak(utterance);
 	}
 
-	function scan(){
-
+	function scan(elementArray){
+		var count = 0;
+		var intervalID = setInterval(function () {
+			if (count < elementArray.length){
+				elementArray[count].focus();
+				tts(elementArray[count].text);
+				count++;
+			}
+			else{
+				elementArray[count-1].blur();
+				clearInterval(intervalID);
+			}
+		}, 5000);
 	}
 
 });
