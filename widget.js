@@ -1,18 +1,17 @@
 window.addEventListener('load', function (){	
 	var keys = [];
-	var intervalID = null; //set to some value only if scanner running
-	var speech_rate = 1;
-	var silence_duration = 5000;
-	var elementCount = 0;
-	var elementArray = [];
-	var inTTSmode = false;
-	var option = "";
-	var is_scanning = false;
+	var intervalID = null; // set to some value only if scanner running
+	var elementCount = 0; // index of element currently in focus
+	var elementArray = []; // array containing elements
+	var inTTSmode = false; // self-explanatory
+	var option = ""; // whether link, button or text input selected, or none
+	var is_scanning = false; // whether in the middle of the scan or no
 
 	window.addEventListener("keydown", function(e){
 		keys[e.keyCode] = true;
 		console.log(e.keyCode);
 
+		// enter and exit TTS mode via Ctrl+Shift+S
 		if (num_of_true(keys)==3 && keys[17] && keys[16] && keys[83]){
 			window.speechSynthesis.cancel();
 			keys.length = 0;
@@ -32,6 +31,7 @@ window.addEventListener('load', function (){
 			}
 		}
 
+		// Say the links out loud
 		if (num_of_true(keys) == 1 && keys[49]){
 			window.speechSynthesis.cancel();
 			keys.length = 0;
@@ -46,6 +46,7 @@ window.addEventListener('load', function (){
 			}
 		}
 
+		// Say the button names out loud
 		if (num_of_true(keys)==1 && keys[50]){
 			window.speechSynthesis.cancel();
 			keys.length = 0;
@@ -60,6 +61,7 @@ window.addEventListener('load', function (){
 			}
 		}
 
+		// Say the input field names out loud 
 		if (num_of_true(keys)==1 && keys[51]){
 			window.speechSynthesis.cancel();
 			keys.length = 0;
@@ -74,6 +76,11 @@ window.addEventListener('load', function (){
 			}
 		}
 
+		// Say the options out loud
+		// 1 to scan links
+		// 2 to scan buttons
+		// 3 to scan input fields
+		// 4 to repeat options
 		if (num_of_true(keys)==1 && keys[52]){
 			window.speechSynthesis.cancel();
 			keys.length = 0;
@@ -83,6 +90,7 @@ window.addEventListener('load', function (){
 			}			
 		}
 
+		// Stop scan, if currently scanning
 		if (num_of_true(keys)==1 && keys[27]){
 			window.speechSynthesis.cancel();
 			keys.length = 0;
