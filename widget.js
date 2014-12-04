@@ -5,16 +5,19 @@ window.addEventListener('load', function (){
 	var silence_duration = 5000;
 	var elementCount = 0;
 	var elementArray = [];
-	var paused = false;
 	var inTTSmode = false;
 	var option = "";
+	var is_scanning = false;
 
 	window.addEventListener("keydown", function(e){
 		keys[e.keyCode] = true;
 		console.log(e.keyCode);
 
 		if (num_of_true(keys)==3 && keys[17] && keys[16] && keys[83]){
+			window.speechSynthesis.cancel();
+			keys.length = 0;
 			if (inTTSmode){
+				stop_scan();
 				inTTSmode = !inTTSmode;
 				tts("Now exiting text-to-speech mode");
 				tts("Goodbye!");
@@ -25,15 +28,15 @@ window.addEventListener('load', function (){
 				inTTSmode = true;
 				tts("Welcome to text-to-speech mode!");
 				tts("Please listen carefully to the following options:");
-				tts("Press 1 to list links.");
-				tts("Press 2 to list buttons.");
-				tts("Press 3 to list input fields.");
+				say_options();
 			}
 		}
 
 		if (num_of_true(keys) == 1 && keys[49]){
+			window.speechSynthesis.cancel();
 			keys.length = 0;
 			if (inTTSmode){
+				stop_scan();
 				option = "link";
 				elementArray = get_all_links();
 				var to_scan = pre_announce(elementArray, option);
@@ -44,8 +47,10 @@ window.addEventListener('load', function (){
 		}
 
 		if (num_of_true(keys)==1 && keys[50]){
+			window.speechSynthesis.cancel();
 			keys.length = 0;
 			if (inTTSmode){
+				stop_scan();
 				option = "button";
 				elementArray = get_all_buttons();
 				var to_scan = pre_announce(elementArray, option);
@@ -55,28 +60,51 @@ window.addEventListener('load', function (){
 			}
 		}
 
-		if (num_of_true(keys)==1 && keys[27]){
+		if (num_of_true(keys)==1 && keys[51]){
+			window.speechSynthesis.cancel();
 			keys.length = 0;
-			if (intervalID){
-				clearInterval(intervalID);
-				elementArray[elementCount-1].blur();
-				elementCount = 0; //when you escape, the only way to restart is all the way from the top
+			if (inTTSmode){
+				stop_scan();
+				option = "input field";
+				elementArray = get_all_input_boxes();
+				var to_scan = pre_announce(elementArray, option);
+				if (to_scan){
+					scan(elementArray, option);
+				}
 			}
 		}
 
-		if (num_of_true(keys)==1 && keys[80]){
-			keys.length=0;
-			paused = !paused;
-			if (paused){
-				tts("Scanning paused");
-				clearInterval(intervalID);
-			}
-			else{
-				scan(elementArray, option);
+		if (num_of_true(keys)==1 && keys[52]){
+			window.speechSynthesis.cancel();
+			keys.length = 0;
+			if (inTTSmode){
+				stop_scan();
+				say_options();
+			}			
+		}
+
+		if (num_of_true(keys)==1 && keys[27]){
+			window.speechSynthesis.cancel();
+			keys.length = 0;
+			if (inTTSmode){
+				if (is_scanning){
+					tts("Stopping scan");
+				}
+				else{
+					tts("There is no scan to stop");
+				}
+				stop_scan();
 			}
 		}
 
 	});
+
+	function say_options(){
+		tts("Press 1 to list links.");
+		tts("Press 2 to list buttons.");
+		tts("Press 3 to list input fields.");
+		tts("Press 4 to hear options again");
+	}
 
 	function get_all_links(){
 		var l = document.getElementsByTagName('a');
@@ -93,20 +121,16 @@ window.addEventListener('load', function (){
 		for(var i=0; i<b.length; i++) {
   			arr.push(b[i]);
 		}
-		// b = document.getElementsByTagName('input');
-		// for(var i=0; i<b.length; i++) {
-		//	if (b[i].type == "button" || b[i].type == "submit"){
-		//		arr.push(b[i]);
-		//	}
-		// }
 		return arr;
 	}
 
 	function get_all_input_boxes(){
 		var inp = document.getElementsByTagName('input');
 		var arr = [];
-		for(var i=0; i<b.length; i++) {
-  			arr.push(inp[i]);
+		for(var i=0; i<inp.length; i++) {
+  			if (inp[i].type == "text"){
+  				arr.push(inp[i]);
+  			}
 		}
 		return arr;				
 	}
@@ -154,17 +178,37 @@ window.addEventListener('load', function (){
 		window.speechSynthesis.speak(utterance);
 	}
 
+	function stop_scan(){
+		if (intervalID){
+			clearInterval(intervalID);
+			if (elementArray[elementCount-1]){
+				elementArray[elementCount-1].blur();
+			}
+			elementArray.length = 0;
+			elementCount = 0;
+			option = "";
+			is_scanning = false;
+		}		
+	}
+
 	function scan(elementArray, option){
 		tts("Now scanning");
 		intervalID = setInterval(function () {
 			if (elementCount < elementArray.length){
+				is_scanning = true;
 				elementArray[elementCount].focus();
 				elementArray[elementCount].scrollIntoView(false);
 				tts(option+" "+(elementCount+1)+" ");
-				tts(elementArray[elementCount].textContent);
+				if (option === "input field"){
+					tts(elementArray[elementCount].name);
+				}
+				else{
+					tts(elementArray[elementCount].textContent);
+				}
 				elementCount++;
 			}
 			else{
+				is_scanning = false;
 				elementArray[elementCount-1].blur();
 				clearInterval(intervalID);
 				if (option === "link"){
@@ -173,10 +217,12 @@ window.addEventListener('load', function (){
 				if (option === "button"){
 					tts("There are no more buttons on this page");
 				}
+				if (option === "input field"){
+					tts("There are no more input fields on this page");
+				}
 				option = "";
 				elementCount = 0;
 			}
 		}, 5000);
 	}
-
 });
