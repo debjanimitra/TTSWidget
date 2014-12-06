@@ -1,15 +1,15 @@
 window.addEventListener('load', function (){	
-	var keys = [];
+	var keys = []; 
 	var intervalID = null; // set to some value only if scanner running
 	var elementCount = 0; // index of element currently in focus
 	var elementArray = []; // array containing elements
 	var inTTSmode = false; // self-explanatory
 	var option = ""; // whether link, button or text input selected, or none
 	var is_scanning = false; // whether in the middle of the scan or no
-	var selected_option = false; 
-	var to_scan = false;
-	var tab_mode = false;
-	var valid_inputs = [17, 16, 83, 49, 50, 51, 90, 77, 9, 52, 27];
+	var selected_option = false; // user has selected to scan (auto or man) one of links, buttons input fields
+	var to_scan = false; // auto scan only if the page has at least 1
+	var tab_mode = false; // user chose man
+	var valid_inputs = [17, 16, 83, 49, 50, 51, 90, 77, 9, 52, 27]; // set of keys that are part or whole of a keybaord command
 
 	window.addEventListener("keydown", function(e){
 		curr_key = e.which || e.keyCode;
@@ -17,9 +17,9 @@ window.addEventListener('load', function (){
 		if (valid_inputs.indexOf(curr_key)>-1){ 
 			keys[curr_key] = true;
 		}
-		console.log(curr_key);
-		console.log(num_of_true(keys));
-		console.log(keys);
+		if (inTTSmode){
+			e.preventDefault();
+		}
 
 		// enter and exit TTS mode via Ctrl+Shift+S
 		if (num_of_true(keys)==3 && keys[17] && keys[16] && keys[83]){
@@ -53,9 +53,6 @@ window.addEventListener('load', function (){
 				option = "link";
 				elementArray = get_all_links();
 				to_scan = pre_announce(elementArray, option);
-				//if (to_scan){
-				//	scan(elementArray, option);
-				//}
 			}
 		}
 
@@ -70,9 +67,6 @@ window.addEventListener('load', function (){
 				option = "button";
 				elementArray = get_all_buttons();
 				to_scan = pre_announce(elementArray, option);
-				//if (to_scan){
-				//	scan(elementArray, option);
-				//}
 			}
 		}
 
@@ -87,9 +81,6 @@ window.addEventListener('load', function (){
 				option = "input field";
 				elementArray = get_all_input_boxes();
 				to_scan = pre_announce(elementArray, option);
-				//if (to_scan){
-				//	scan(elementArray, option);
-				//}
 			}
 		}
 
@@ -101,7 +92,7 @@ window.addEventListener('load', function (){
 				if (selected_option){
 					if(to_scan){
 						stop_scan(false);
-						scan(elementArray, option);
+						automatic_scan(elementArray, option);
 					}
 				}
 			}
@@ -131,8 +122,7 @@ window.addEventListener('load', function (){
 				if (selected_option){
 					if (to_scan){
 						if (tab_mode){
-							e.preventDefault();
-							tab(elementArray, option);
+							manual_scan(elementArray, option);
 						}
 					}
 				}
@@ -160,7 +150,6 @@ window.addEventListener('load', function (){
 			if (inTTSmode){
 				if (is_scanning){
 					tts("Stopping scan");
-					//give more options here
 				}
 				else{
 					tts("There is no automatic scan to stop");
@@ -268,7 +257,7 @@ window.addEventListener('load', function (){
 		}		
 	}
 
-	function tab(elementArray, option){
+	function manual_scan(elementArray, option){
 		if (elementCount < elementArray.length){
 			elementArray[elementCount].focus();
 			elementArray[elementCount].scrollIntoView(false);
@@ -282,24 +271,11 @@ window.addEventListener('load', function (){
 			elementCount++;
 		}
 		else {
-			elementArray[elementCount-1].blur();
-			if (option === "link"){
-				tts("There are no more links on this page");
-			}
-			if (option === "button"){
-				tts("There are no more buttons on this page");
-			}
-			if (option === "input field"){
-				tts("There are no more input fields on this page");
-			}
-			elementCount = 0;
-			tts("Press Z to scan "+option+"s automatically");
-			tts("Press tab to scan "+option+"s manually again");
-			tts("Press 4 to hear menu options");
+			finish_scan(option);
 		}
 	}
 
-	function scan(elementArray, option){
+	function automatic_scan(elementArray, option){
 		tts ("You have chosen to scan automatically");
 		tts("Now scanning");
 		intervalID = setInterval(function () {
@@ -317,23 +293,22 @@ window.addEventListener('load', function (){
 				elementCount++;
 			}
 			else{
-				is_scanning = false;
-				elementArray[elementCount-1].blur();
 				clearInterval(intervalID);
-				if (option === "link"){
-					tts("There are no more links on this page");
-				}
-				if (option === "button"){
-					tts("There are no more buttons on this page");
-				}
-				if (option === "input field"){
-					tts("There are no more input fields on this page");
-				}
-				tts ("Press Z to scan "+option+"s automatically again");
-				tts ("Press M to scan "+option+"s manually");
-				tts("Press 4 to hear menu options");
-				elementCount = 0;
+				is_scanning = false;
+				finish_scan(option);
 			}
 		}, 3000);
 	}
+
+	function finish_scan(option){
+		if (elementArray[elementCount-1]){
+			elementArray[elementCount-1].blur();
+		}
+		tts("There are no more "+option+"s on this page");
+		elementCount = 0;
+		tts ("Press Z to scan "+option+"s automatically");
+		tts ("Press M to scan "+option+"s manually");
+		tts("Press 4 to hear menu options");
+	}
 });
+
