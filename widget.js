@@ -13,11 +13,10 @@ window.addEventListener('load', function (){
 
 	window.addEventListener("keydown", function(e){
 		curr_key = e.which || e.keyCode;
-
 		if (valid_inputs.indexOf(curr_key)>-1){ 
 			keys[curr_key] = true;
 		}
-		if (inTTSmode){
+		if (inTTSmode && curr_key == 9){
 			e.preventDefault();
 		}
 
