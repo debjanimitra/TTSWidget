@@ -9,17 +9,21 @@ window.addEventListener('load', function (){
 	var selected_option = false; // user has selected to scan (auto or man) one of links, buttons input fields
 	var to_scan = false; // auto scan only if the page has at least 1
 	var tab_mode = false; // user chose man
-	var valid_inputs = [17, 16, 83, 49, 50, 51, 90, 77, 9, 52, 27]; // set of keys that are part or whole of a keybaord command
+	var valid_inputs = [17, 16, 83, 49, 50, 51, 65, 77, 9, 52, 27]; // set of keys that are part or whole of a keybaord command
+	var is_input_field = false;
 
 	window.addEventListener("keydown", function(e){
 		curr_key = e.which || e.keyCode;
-		if (valid_inputs.indexOf(curr_key)>-1){ 
+		console.log(curr_key);
+
+		if (valid_inputs.indexOf(curr_key)>-1 && (find_focused()==null || find_focused().type != "text" || curr_key == 9)){
+			//if is_input_field, and anything other than tab, do not add
 			keys[curr_key] = true;
 		}
 		if (inTTSmode && curr_key == 9){
 			e.preventDefault();
 		}
-
+		console.log(keys);
 		// enter and exit TTS mode via Ctrl+Shift+S
 		if (num_of_true(keys)==3 && keys[17] && keys[16] && keys[83]){
 			window.speechSynthesis.cancel();
@@ -43,8 +47,10 @@ window.addEventListener('load', function (){
 
 		// Say the links out loud
 		if (num_of_true(keys) == 1 && keys[49]){
-			window.speechSynthesis.cancel();
 			keys.length = 0;
+
+			if (!is_scanning){
+			window.speechSynthesis.cancel();
 			if (inTTSmode){
 				tab_mode = false;
 				selected_option = true;
@@ -54,11 +60,13 @@ window.addEventListener('load', function (){
 				to_scan = pre_announce(elementArray, option);
 			}
 		}
+		}
 
 		// Say the button names out loud
 		if (num_of_true(keys)==1 && keys[50]){
-			window.speechSynthesis.cancel();
 			keys.length = 0;
+			if (!is_scanning){
+			window.speechSynthesis.cancel();
 			if (inTTSmode){
 				tab_mode = false;
 				selected_option = true;
@@ -68,12 +76,16 @@ window.addEventListener('load', function (){
 				to_scan = pre_announce(elementArray, option);
 			}
 		}
+		}
 
 		// Say the input field names out loud 
 		if (num_of_true(keys)==1 && keys[51]){
-			window.speechSynthesis.cancel();
 			keys.length = 0;
+			if (!is_scanning){
+								console.log("is_scanning is"+is_scanning);
+			window.speechSynthesis.cancel();
 			if (inTTSmode){
+				is_input_field = true;
 				tab_mode = false;
 				selected_option = true;
 				stop_scan(true);
@@ -82,33 +94,42 @@ window.addEventListener('load', function (){
 				to_scan = pre_announce(elementArray, option);
 			}
 		}
+		}
 
-		if (num_of_true(keys)==1 && keys[90]){
-			window.speechSynthesis.cancel();
+		//Presses A
+		if (num_of_true(keys)==1 && keys[65]){
 			keys.length = 0;
-			if (inTTSmode){
-				tab_mode = false;
-				if (selected_option){
-					if(to_scan){
-						stop_scan(false);
-						automatic_scan(elementArray, option);
+			if (!is_scanning){
+				console.log("is_scanning is"+is_scanning);
+				window.speechSynthesis.cancel();
+				if (inTTSmode){
+					tab_mode = false;
+					if (selected_option){
+						if(to_scan){
+							stop_scan(false);
+							automatic_scan(elementArray, option);
+						}
 					}
 				}
 			}
 		}
 
+		//Presses M
 		if (num_of_true(keys)==1 && keys[77]){
-			window.speechSynthesis.cancel();
 			keys.length = 0;
-			if (inTTSmode){
-				if (selected_option){
-					if(to_scan){
-						if (!tab_mode){
-							tts("You have chosen to scan manually");
+			if (!is_scanning){
+				if (inTTSmode){
+					window.speechSynthesis.cancel();
+					if (selected_option){
+						if(to_scan){
+							if (!tab_mode){
+								tts("You have chosen to scan manually");
+							}
+							stop_scan(false);
+							is_scanning = true;
+							tab_mode = true;
+							tts("Press tab to manually go through the "+option+"s on this page");
 						}
-						stop_scan(false);
-						tab_mode = true;
-						tts("Press tab to manually go through the "+option+"s on this page");
 					}
 				}
 			}
@@ -117,10 +138,15 @@ window.addEventListener('load', function (){
 		if (num_of_true(keys)==1 && keys[9]){
 			window.speechSynthesis.cancel();
 			keys.length = 0;
+			console.log("here 1")
 			if (inTTSmode){
+							console.log("here 2")
 				if (selected_option){
+								console.log("here 3")
 					if (to_scan){
+									console.log("here 4")
 						if (tab_mode){
+										console.log("here 5")
 							manual_scan(elementArray, option);
 						}
 					}
@@ -134,27 +160,14 @@ window.addEventListener('load', function (){
 		// 3 to scan input fields
 		// 4 to repeat options
 		if (num_of_true(keys)==1 && keys[52]){
-			window.speechSynthesis.cancel();
 			keys.length = 0;
+			if (!is_scanning){
+			window.speechSynthesis.cancel();
 			if (inTTSmode){
 				stop_scan(true);
 				say_options();
-			}			
-		}
-
-		// Stop scan, if currently scanning
-		if (num_of_true(keys)==1 && keys[27]){
-			window.speechSynthesis.cancel();
-			keys.length = 0;
-			if (inTTSmode){
-				if (is_scanning){
-					tts("Stopping scan");
-				}
-				else{
-					tts("There is no automatic scan to stop");
-				}
-				stop_scan(false);
 			}
+			}	
 		}
 
 	});
@@ -207,8 +220,9 @@ window.addEventListener('load', function (){
 		else{
 			tts("There are "+arr.length+" "+item+"s on this page");			
 		}
-		tts("Press Z to scan automatically");
-		tts("Press M to scan manually")
+		tts("Press A to scan automatically");
+		tts("Press M to scan manually");
+		tts("Press 4 to hear menu options again");
 		return true;
 	}
 
@@ -257,12 +271,16 @@ window.addEventListener('load', function (){
 	}
 
 	function manual_scan(elementArray, option){
+		is_scanning = true;
 		if (elementCount < elementArray.length){
 			elementArray[elementCount].focus();
 			elementArray[elementCount].scrollIntoView(false);
 			tts(option+" "+(elementCount+1)+" ");
 			if (option === "input field"){
 				tts(elementArray[elementCount].name);
+					if (elementArray[elementCount].value && elementArray[elementCount].value != ""){
+						tts(elementArray[elementCount].value);
+					}
 			}
 			else{
 				tts(elementArray[elementCount].textContent);
@@ -285,6 +303,9 @@ window.addEventListener('load', function (){
 				tts(option+" "+(elementCount+1)+" ");
 				if (option === "input field"){
 					tts(elementArray[elementCount].name);
+					if (elementArray[elementCount].value && elementArray[elementCount].value != ""){
+						tts(elementArray[elementCount].value);
+					}
 				}
 				else{
 					tts(elementArray[elementCount].textContent);
@@ -293,19 +314,19 @@ window.addEventListener('load', function (){
 			}
 			else{
 				clearInterval(intervalID);
-				is_scanning = false;
 				finish_scan(option);
 			}
-		}, 3000);
+		}, 5000);
 	}
 
 	function finish_scan(option){
 		if (elementArray[elementCount-1]){
 			elementArray[elementCount-1].blur();
 		}
+		is_scanning = false;
 		tts("There are no more "+option+"s on this page");
 		elementCount = 0;
-		tts ("Press Z to scan "+option+"s automatically");
+		tts ("Press A to scan "+option+"s automatically");
 		tts ("Press M to scan "+option+"s manually");
 		tts("Press 4 to hear menu options");
 	}
