@@ -9,8 +9,8 @@ window.addEventListener('load', function (){
 	var selected_option = false; // user has selected to scan (auto or man) one of links, buttons input fields
 	var to_scan = false; // auto scan only if the page has at least 1
 	var tab_mode = false; // user chose man
-	var valid_inputs = [17, 16, 83, 49, 50, 51, 65, 77, 9, 52, 27]; // set of keys that are part or whole of a keybaord command
-	var is_input_field = false;
+	var valid_inputs = [17, 16, 83, 49, 50, 51, 65, 77, 9, 52]; // set of keys that are part or whole of a keybaord command
+	var is_input_field = false; //if selected option is input field
 
 	window.addEventListener("keydown", function(e){
 		curr_key = e.which || e.keyCode;
@@ -45,7 +45,7 @@ window.addEventListener('load', function (){
 			}
 		}
 
-		// Say the links out loud
+		// Scan links
 		if (num_of_true(keys) == 1 && keys[49]){
 			keys.length = 0;
 
@@ -62,7 +62,7 @@ window.addEventListener('load', function (){
 		}
 		}
 
-		// Say the button names out loud
+		// Scan buttons
 		if (num_of_true(keys)==1 && keys[50]){
 			keys.length = 0;
 			if (!is_scanning){
@@ -78,7 +78,7 @@ window.addEventListener('load', function (){
 		}
 		}
 
-		// Say the input field names out loud 
+		// Scan input fields 
 		if (num_of_true(keys)==1 && keys[51]){
 			keys.length = 0;
 			if (!is_scanning){
@@ -96,7 +96,7 @@ window.addEventListener('load', function (){
 		}
 		}
 
-		//Presses A
+		// Scan automatically -- user presses A
 		if (num_of_true(keys)==1 && keys[65]){
 			keys.length = 0;
 			if (!is_scanning){
@@ -114,7 +114,7 @@ window.addEventListener('load', function (){
 			}
 		}
 
-		//Presses M
+		// Scan manually -- user presses M
 		if (num_of_true(keys)==1 && keys[77]){
 			keys.length = 0;
 			if (!is_scanning){
@@ -135,18 +135,14 @@ window.addEventListener('load', function (){
 			}
 		}
 
+		// TAB through the options
 		if (num_of_true(keys)==1 && keys[9]){
 			window.speechSynthesis.cancel();
 			keys.length = 0;
-			console.log("here 1")
 			if (inTTSmode){
-							console.log("here 2")
 				if (selected_option){
-								console.log("here 3")
 					if (to_scan){
-									console.log("here 4")
 						if (tab_mode){
-										console.log("here 5")
 							manual_scan(elementArray, option);
 						}
 					}
@@ -316,7 +312,7 @@ window.addEventListener('load', function (){
 				clearInterval(intervalID);
 				finish_scan(option);
 			}
-		}, 5000);
+		}, 4500);
 	}
 
 	function finish_scan(option){
